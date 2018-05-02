@@ -1,0 +1,228 @@
+import pandas as pd
+
+# data import from csv
+df = pd.read_csv("/home/vinod/Hackathon/bank-additional/bank-additional/bank-additional-full.csv",
+                  sep=';',na_values=["unknown"],doublequote=True)
+
+# data imputation for categorical varibale using mode
+df['job'] = df['job'].fillna(df['job'].mode()[0])
+df['loan'] = df['loan'].fillna(df['loan'].mode()[0])
+df['housing'] = df['housing'].fillna(df['housing'].mode()[0])
+df['default'] = df['default'].fillna(df['default'].mode()[0])
+df['marital'] = df['marital'].fillna(df['marital'].mode()[0])
+df['education'] = df['education'].fillna(df['education'].mode()[0])
+
+# separating y and reshaping it
+df1 = df.iloc[:, :-1]
+y = df['y']
+y = y.values.reshape(-1,1)
+
+# label encoding of categorical variable
+df2 = df1.copy()
+from sklearn.preprocessing import LabelEncoder
+encoder = LabelEncoder()
+df2['job_e'] = encoder.fit_transform(df1['job'])
+df2['loan_e'] = encoder.fit_transform(df1['loan'])
+df2['housing_e'] = encoder.fit_transform(df1['housing'])
+df2['default_e'] = encoder.fit_transform(df1['default'])
+df2['marital_e'] = encoder.fit_transform(df1['marital'])
+df2['education_e'] = encoder.fit_transform(df1['education'])
+df2['contact_e'] = encoder.fit_transform(df1['contact'])
+df2['month_e'] = encoder.fit_transform(df1['month'])
+df2['day_of_week_e'] = encoder.fit_transform(df1['day_of_week'])
+
+#label manually encoded to give higher weightage to the corresponding data
+df2['poutcome_e'] = 0
+df2.loc[df['poutcome'] == 'nonexistent','poutcome_e'] = 0
+df2.loc[df['poutcome'] == 'failure','poutcome_e'] = 1
+df2.loc[df['poutcome'] == 'success','poutcome_e'] = 2
+
+df2['education_e'] = 0
+df2.loc[df['education'] == 'illiterate','education_e'] = 0
+df2.loc[df['education'] == 'basic.4y','education_e'] = 1
+df2.loc[df['education'] == 'basic.6y','education_e'] = 2
+df2.loc[df['education'] == 'basic.9y','education_e'] = 3
+df2.loc[df['education'] == 'high.school','education_e'] = 4
+df2.loc[df['education'] == 'professional.course','education_e'] = 5
+df2.loc[df['education'] == 'university.degree','education_e'] = 6
+
+# converting age to categorical variable
+df2['AgeGroup'] = 0
+df2.loc[(df['age'] >= 17) & (df['age'] <= 22),'AgeGroup'] = '17-22'
+df2.loc[(df['age'] >= 23) & (df['age'] <= 30),'AgeGroup'] = '23-30'
+df2.loc[(df['age'] >= 31) & (df['age'] <= 40),'AgeGroup'] = '31-40'
+df2.loc[(df['age'] >= 41) & (df['age'] <= 55),'AgeGroup'] = '41-55'
+df2.loc[df['age'] > 55,'AgeGroup'] = '55++'
+
+df2['AgeGroup_e'] = encoder.fit_transform(df2['AgeGroup'])
+
+# dropping raw columns
+df2.drop(df2[['age','job','education','marital','AgeGroup','poutcome','housing','default',
+                      'loan','contact','month','day_of_week']],axis=1,inplace=True)
+
+# scaling continous variables using standard scaling
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+df2['duration_e'] = scaler.fit_transform(df2['duration'])
+df2['campaign_e'] = scaler.fit_transform(df2['campaign'])
+df2['pdays_e'] = scaler.fit_transform(df2['pdays'])
+df2['previous_e'] = scaler.fit_transform(df2['previous'])
+df2['emp_var_rate'] = scaler.fit_transform(df2['emp.var.rate'])
+df2['cons_price_idx'] = scaler.fit_transform(df2['cons.price.idx'])
+df2['cons_conf_idx'] = scaler.fit_transform(df2['cons.conf.idx'])
+df2['euribor3m_e'] = scaler.fit_transform(df2['euribor3m'])
+df2['employed_e'] = scaler.fit_transform(df2['nr.employed'])
+
+# dropping raw columns
+df2.drop(df2[['duration','campaign','pdays','previous','emp.var.rate','cons.price.idx','cons.conf.idx','euribor3m',
+                      'nr.employed']],axis=1,inplace=True)
+
+
+# converting label encoded columns to one hot encoder
+df2 = pd.get_dummies(df2,columns=['loan_e','housing_e','marital_e','contact_e','AgeGroup_e','day_of_week_e','month_e'])
+
+# dropping raw columns
+df2.drop(df2[['default_e']],axis=1,inplace=True)
+
+# assgin final dataframe as X(Train)
+X = df2.copy()
+
+================================================
+similar process followed for X test data as well
+
+import pandas as pd
+
+dft = pd.read_csv("/home/vinod/Hackathon/bank-additional/bank-additional/bank-additional.csv",
+                  sep=';',na_values=["unknown"],doublequote=True)
+
+dft['job'] = dft['job'].fillna(dft['job'].mode()[0])
+dft['loan'] = dft['loan'].fillna(dft['loan'].mode()[0])
+dft['housing'] = dft['housing'].fillna(dft['housing'].mode()[0])
+dft['default'] = dft['default'].fillna(dft['default'].mode()[0])
+dft['marital'] = dft['marital'].fillna(dft['marital'].mode()[0])
+dft['education'] = dft['education'].fillna(dft['education'].mode()[0])
+
+dft1 = dft.iloc[:, :-1]
+y1 = dft['y']
+y1 = y1.values.reshape(-1,1)
+
+dft2 = dft1.copy()
+from sklearn.preprocessing import LabelEncoder
+encoder = LabelEncoder()
+dft2['job_e'] = encoder.fit_transform(dft1['job'])
+dft2['loan_e'] = encoder.fit_transform(dft1['loan'])
+dft2['housing_e'] = encoder.fit_transform(dft1['housing'])
+dft2['default_e'] = encoder.fit_transform(dft1['default'])
+dft2['marital_e'] = encoder.fit_transform(dft1['marital'])
+dft2['education_e'] = encoder.fit_transform(dft1['education'])
+dft2['contact_e'] = encoder.fit_transform(dft1['contact'])
+dft2['month_e'] = encoder.fit_transform(dft1['month'])
+dft2['day_of_week_e'] = encoder.fit_transform(dft1['day_of_week'])
+
+dft2['poutcome_e'] = 0
+dft2.loc[dft2['poutcome'] == 'nonexistent','poutcome_e'] = 0
+dft2.loc[dft2['poutcome'] == 'failure','poutcome_e'] = 1
+dft2.loc[dft2['poutcome'] == 'success','poutcome_e'] = 2
+
+dft2['education_e'] = 0
+dft2.loc[dft2['education'] == 'illiterate','education_e'] = 0
+dft2.loc[dft2['education'] == 'basic.4y','education_e'] = 1
+dft2.loc[dft2['education'] == 'basic.6y','education_e'] = 2
+dft2.loc[dft2['education'] == 'basic.9y','education_e'] = 3
+dft2.loc[dft2['education'] == 'high.school','education_e'] = 4
+dft2.loc[dft2['education'] == 'professional.course','education_e'] = 5
+dft2.loc[dft2['education'] == 'university.degree','education_e'] = 6
+
+dft2['AgeGroup'] = 0
+dft2.loc[(dft2['age'] >= 17) & (dft2['age'] <= 22),'AgeGroup'] = '17-22'
+dft2.loc[(dft2['age'] >= 23) & (dft2['age'] <= 30),'AgeGroup'] = '23-30'
+dft2.loc[(dft2['age'] >= 31) & (dft2['age'] <= 40),'AgeGroup'] = '31-40'
+dft2.loc[(dft2['age'] >= 41) & (dft2['age'] <= 55),'AgeGroup'] = '41-55'
+dft2.loc[dft2['age'] > 55,'AgeGroup'] = '55++'
+
+dft2['AgeGroup_e'] = encoder.fit_transform(dft2['AgeGroup'])
+
+dft2.drop(dft2[['age','job','education','marital','AgeGroup','poutcome','housing','default',
+                      'loan','contact','month','day_of_week']],axis=1,inplace=True)
+
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+dft2['duration_e'] = scaler.fit_transform(dft2['duration'])
+dft2['campaign_e'] = scaler.fit_transform(dft2['campaign'])
+dft2['pdays_e'] = scaler.fit_transform(dft2['pdays'])
+dft2['previous_e'] = scaler.fit_transform(dft2['previous'])
+dft2['emp_var_rate'] = scaler.fit_transform(dft2['emp.var.rate'])
+dft2['cons_price_idx'] = scaler.fit_transform(dft2['cons.price.idx'])
+dft2['cons_conf_idx'] = scaler.fit_transform(dft2['cons.conf.idx'])
+dft2['euribor3m_e'] = scaler.fit_transform(dft2['euribor3m'])
+dft2['employed_e'] = scaler.fit_transform(dft2['nr.employed'])
+
+dft2.drop(dft2[['duration','campaign','pdays','previous','emp.var.rate','cons.price.idx','cons.conf.idx','euribor3m',
+                      'nr.employed']],axis=1,inplace=True)
+
+dft2 = pd.get_dummies(dft2,columns=['loan_e','housing_e','marital_e','contact_e','AgeGroup_e','day_of_week_e','month_e'])
+
+dft2.drop(dft2[['default_e']],axis=1,inplace=True)
+
+X1 = dft2.copy()
+
+===================================
+#binary encode y values
+from sklearn import preprocessing
+lb = preprocessing.LabelBinarizer()
+y = lb.fit_transform(y)
+y1 = lb.fit_transform(y1)
+
+=====================================
+#Decision tree classifier with default paramters
+
+from sklearn.tree import DecisionTreeClassifier 
+from sklearn.metrics import accuracy_score
+
+clf_gini = DecisionTreeClassifier(criterion='gini')
+clf_gini.fit(X,y)
+
+y_pred_gini = clf_gini.predict(X1)
+y_prob_gini = clf_gini.predict_proba(X1)
+
+y_pred_gini = y_pred_gini.reshape(-1,1)
+
+===================================
+#accuracy check
+
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import precision_score
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_curve,auc
+cm = confusion_matrix(y1,y_pred_gini)
+print cm
+
+sensitivity = float(cm[0,0])/float((cm[0,0]+cm[0,1]))
+print('Sensitivity : ', sensitivity)
+
+
+specificity = float(cm[1,1])/float((cm[1,0]+cm[1,1]))
+print('Specificity : ', specificity)
+
+Precision_score = precision_score(y1,y_pred_gini)
+print('Precision score : ', Precision_score)
+
+ROC_AUC_Score = roc_auc_score(y1,y_prob_gini[:,1])
+print('ROC AUC Score : ', ROC_AUC_Score)
+
+fpr,tpr,thresholds=roc_curve(y1,y_prob_gini[:,1],pos_label=1)
+
+accuracy_gini = accuracy_score(y1,y_pred_gini)
+print ('decision tree classifier accuracy : {}'.format(accuracy_gini))
+
+auc = auc(fpr,tpr)
+print ('auc : {}'.format(auc))
+
+from matplotlib import pyplot as plt
+%matplotlib inline
+
+plt.plot(fpr,tpr)
+plt.plot([0,1],[0,1],color='r',linestyle='--')
+plt.show()
+
+
